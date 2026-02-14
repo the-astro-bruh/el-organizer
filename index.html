@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus - Gestión Profesional</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <!-- React y Babel -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        body {
+            font-family: 'Noto Sans', sans-serif;
+            background-color: #0f172a;
+            /* Fallback dark */
+        }
+
+        .font-serif {
+            font-family: 'Noto Serif', serif;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        /* Transiciones suaves para cambio de tema */
+        .theme-transition {
+            transition: background-color 0.5s ease, color 0.5s ease, border-color 0.5s ease;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // --- ICONOS ---
+        const Icon = ({ name, size = 20, className = "" }) => {
+            useEffect(() => {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            }, [name]);
+
+            // Map fallback
+            const iconsMap = {
+                Circle: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10" /></svg>,
+                CheckCircle2: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" /><path d="m9 12 2 2 4-4" /></svg>,
+                Plus: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14" /><path d="M12 5v14" /></svg>,
+                Home: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>,
+                Briefcase: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="20" height="14" x="2" y="7" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></svg>,
+                Sun: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="4" /><path d="M12 2v2" /><path d="M12 20v2" /><path d="m4.93 4.93 1.41 1.41" /><path d="m17.66 17.66 1.41 1.41" /><path d="M2 12h2" /><path d="M20 12h2" /><path d="m6.34 17.66-1.41 1.41" /><path d="m19.07 4.93-1.41 1.41" /></svg>,
+                Trash2: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /><line x1="10" x2="10" y1="11" y2="17" /><line x1="14" x2="14" y1="11" y2="17" /></svg>,
+                Coffee: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M17 8h1a4 4 0 1 1 0 8h-1" /><path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" /><line x1="6" x2="6" y1="2" y2="4" /><line x1="10" x2="10" y1="2" y2="4" /><line x1="14" x2="14" y1="2" y2="4" /></svg>,
+                Bookmark: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" /></svg>,
+                Calendar: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>,
+                Palette: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="13.5" cy="6.5" r=".5" /><circle cx="17.5" cy="10.5" r=".5" /><circle cx="8.5" cy="7.5" r=".5" /><circle cx="6.5" cy="12.5" r=".5" /><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" /></svg>,
+                ChevronLeft: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m15 18-6-6 6-6" /></svg>,
+                ChevronRight: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m9 18 6-6-6-6" /></svg>,
+                CalendarDays: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /><path d="M8 14h.01" /><path d="M12 14h.01" /><path d="M16 14h.01" /><path d="M8 18h.01" /><path d="M12 18h.01" /><path d="M16 18h.01" /></svg>
+            };
+
+            return <i data-lucide={name} className={className}>{iconsMap[name]}</i>;
+        };
+
+        // --- DATA & UTILS ---
+        const generateId = () => Math.random().toString(36).substr(2, 9);
+        const getGreeting = () => {
+            const hour = new Date().getHours();
+            if (hour < 12) return "Buenos días";
+            if (hour < 19) return "Buenas tardes";
+            return "Buenas noches";
+        };
+
+        // Temas de la aplicación
+        const THEMES = {
+            indigo: {
+                name: 'Indigo Profundo',
+                bg: 'bg-[#1e1b4b]',
+                text: 'text-indigo-50',
+                subtext: 'text-indigo-200/70',
+                card: 'bg-indigo-900/40 backdrop-blur-md border border-indigo-500/30',
+                cardText: 'text-indigo-50',
+                nav: 'bg-indigo-950/80 border-indigo-500/30 text-indigo-300',
+                navActive: 'bg-indigo-600 text-white shadow-indigo-500/20',
+                input: 'text-indigo-100 placeholder:text-indigo-400/50',
+                button: 'bg-indigo-500 hover:bg-indigo-400 text-white'
+            },
+            light: {
+                name: 'Claro Minimal',
+                bg: 'bg-[#FDFCF8]',
+                text: 'text-stone-800',
+                subtext: 'text-stone-500',
+                card: 'bg-white border border-stone-100 shadow-sm',
+                cardText: 'text-stone-800',
+                nav: 'bg-stone-900/95 text-stone-400 border-white/10',
+                navActive: 'bg-stone-800 text-white',
+                input: 'text-stone-800 placeholder:text-stone-300',
+                button: 'bg-stone-800 hover:bg-stone-700 text-white'
+            },
+            slate: {
+                name: 'Pizarra Dark',
+                bg: 'bg-slate-900',
+                text: 'text-slate-50',
+                subtext: 'text-slate-400',
+                card: 'bg-slate-800/50 backdrop-blur border border-slate-700',
+                cardText: 'text-slate-100',
+                nav: 'bg-slate-950/90 text-slate-500 border-slate-800',
+                navActive: 'bg-cyan-700 text-white',
+                input: 'text-slate-200 placeholder:text-slate-600',
+                button: 'bg-cyan-700 hover:bg-cyan-600 text-white'
+            }
+        };
+
+        // --- COMPONENTES ---
+
+        const Button = ({ children, onClick, theme, className = '', type = "button" }) => {
+            return (
+                <button
+                    type={type}
+                    onClick={onClick}
+                    className={`px-4 py-2 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 text-sm shadow-lg shadow-black/5 active:scale-95 ${theme.button} ${className}`}
+                >
+                    {children}
+                </button>
+            );
+        };
+
+        const Card = ({ children, className = '', onClick, theme }) => (
+            <div
+                onClick={onClick}
+                className={`rounded-2xl p-5 transition-all duration-300 ${onClick ? 'cursor-pointer hover:translate-x-1' : ''} ${theme.card} ${theme.cardText} ${className}`}
+            >
+                {children}
+            </div>
+        );
+
+        const CalendarView = ({ tasks, theme }) => {
+            const [currentDate, setCurrentDate] = useState(new Date());
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0 is Sunday
+
+            // Adjust so Monday is 0 if desired, but sticking to Sunday=0 standard for simplicity
+            const blanks = Array(firstDayOfMonth).fill(null);
+            const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+
+            const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+
+            const [selectedDay, setSelectedDay] = useState(new Date().getDate());
+
+            const hasTask = (day) => {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                return tasks.some(t => t.date === dateStr);
+            };
+
+            const getTasksForSelectedDay = () => {
+                const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+                return tasks.filter(t => t.date === dateStr && t.status === 'pending');
+            };
+
+            const changeMonth = (offset) => {
+                setCurrentDate(new Date(year, month + offset, 1));
+                setSelectedDay(null); // Reset selection on month change
+            };
+
+            return (
+                <div className="animate-fade pb-24">
+                    <header className="mb-6 flex items-center justify-between">
+                        <h2 className={`text-2xl font-serif italic ${theme.text}`}>{monthNames[month]} {year}</h2>
+                        <div className="flex gap-2">
+                            <button onClick={() => changeMonth(-1)} className={`p-2 rounded-lg ${theme.subtext} hover:bg-white/10`}><Icon name="ChevronLeft" /></button>
+                            <button onClick={() => changeMonth(1)} className={`p-2 rounded-lg ${theme.subtext} hover:bg-white/10`}><Icon name="ChevronRight" /></button>
+                        </div>
+                    </header>
+
+                    {/* Grid Calendario */}
+                    <div className="grid grid-cols-7 gap-1 mb-6 text-center">
+                        {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map(d => (
+                            <div key={d} className={`text-xs font-bold ${theme.subtext} py-2`}>{d}</div>
+                        ))}
+
+                        {blanks.map((_, i) => <div key={`blank-${i}`} className="h-10"></div>)}
+
+                        {days.map(d => {
+                            const isToday = d === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
+                            const isSelected = d === selectedDay;
+                            const busy = hasTask(d);
+
+                            return (
+                                <button
+                                    key={d}
+                                    onClick={() => setSelectedDay(d)}
+                                    className={`
+                                        h-10 rounded-xl flex flex-col items-center justify-center relative transition-all
+                                        ${isSelected ? theme.button : 'hover:bg-white/5 ' + theme.text}
+                                        ${isToday && !isSelected ? 'border border-current' : ''}
+                                    `}
+                                >
+                                    <span className="text-sm font-medium">{d}</span>
+                                    {busy && (
+                                        <div className={`w-1 h-1 rounded-full mt-1 ${isSelected ? 'bg-white' : 'bg-emerald-400'}`}></div>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Tareas del día seleccionado */}
+                    {selectedDay && (
+                        <div className="animate-fade">
+                            <h3 className={`text-xs font-bold uppercase tracking-widest mb-3 ${theme.subtext}`}>
+                                Agenda para el {selectedDay} de {monthNames[month]}
+                            </h3>
+                            <div className="space-y-3">
+                                {getTasksForSelectedDay().length > 0 ? (
+                                    getTasksForSelectedDay().map(task => (
+                                        <Card key={task.id} theme={theme} className="flex items-center gap-3">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+                                            <span className="text-sm">{task.title}</span>
+                                        </Card>
+                                    ))
+                                ) : (
+                                    <div className={`p-4 rounded-xl border border-dashed flex items-center justify-center gap-2 ${theme.subtext} border-white/10`}>
+                                        <span className="text-sm">Disponible / Sin tareas agendadas</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const PersonalizationModal = ({ currentTheme, onThemeChange, userName, onNameChange, onClose, theme }) => {
+            return (
+                <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center pointer-events-none">
+                    <div className="absolute inset-0 bg-black/50 backdrop-blur-sm pointer-events-auto" onClick={onClose}></div>
+                    <div className={`
+                        w-full max-w-sm rounded-t-3xl sm:rounded-2xl p-6 relative pointer-events-auto transform transition-all animate-fade
+                        ${currentTheme === 'light' ? 'bg-white' : 'bg-slate-900 border border-slate-700'}
+                    `}>
+                        <h3 className={`text-lg font-bold mb-4 ${currentTheme === 'light' ? 'text-stone-800' : 'text-white'}`}>Personalización</h3>
+
+                        <div className="mb-6">
+                            <label className={`block text-[10px] font-bold mb-2 uppercase tracking-widest ${theme.subtext}`}>Tu Nombre</label>
+                            <input
+                                type="text"
+                                value={userName}
+                                onChange={(e) => onNameChange(e.target.value)}
+                                placeholder="Ej. Ana"
+                                className={`w-full p-3 rounded-xl border focus:outline-none transition-all ${theme.input} ${currentTheme === 'light' ? 'bg-stone-50 border-stone-200 focus:border-stone-400' : 'bg-white/5 border-white/10 focus:border-white/20'}`}
+                            />
+                        </div>
+
+                        <h4 className={`text-sm font-bold mb-3 ${currentTheme === 'light' ? 'text-stone-800' : 'text-white'}`}>Tema Visual</h4>
+                        <div className="grid grid-cols-1 gap-3">
+                            {Object.entries(THEMES).map(([key, t]) => (
+                                <button
+                                    key={key}
+                                    onClick={() => { onThemeChange(key); }}
+                                    className={`
+                                        flex items-center gap-4 p-3 rounded-xl transition-all border
+                                        ${currentTheme === key ? 'border-emerald-500 ring-1 ring-emerald-500' : 'border-transparent hover:bg-white/5'}
+                                    `}
+                                >
+                                    <div className={`w-12 h-12 rounded-lg shadow-inner ${t.bg}`}></div>
+                                    <div className="text-left">
+                                        <p className={`font-medium ${currentTheme === 'light' ? 'text-stone-900' : 'text-white'}`}>{t.name}</p>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                        <button onClick={onClose} className="mt-6 w-full py-3 text-sm text-stone-500 font-medium hover:text-stone-800">Guardar y Cerrar</button>
+                    </div>
+                </div>
+            );
+        };
+
+        const AddTaskModal = ({ isOpen, onClose, onAdd, areas, theme }) => {
+            const [title, setTitle] = useState('');
+            const [context, setContext] = useState('');
+            const [area, setArea] = useState(areas[0]);
+            const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+            const [selectedTime, setSelectedTime] = useState('');
+
+            if (!isOpen) return null;
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                if (!title.trim()) return;
+                onAdd({
+                    title,
+                    context,
+                    area,
+                    date: selectedDate,
+                    time: selectedTime,
+                    status: 'pending',
+                    createdAt: new Date().toISOString()
+                });
+                setTitle('');
+                setContext('');
+                setSelectedTime('');
+                onClose();
+            };
+
+            const isLight = theme.bg === 'bg-[#FDFCF8]';
+
+            return (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[90] p-4">
+                    <div className={`rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-fade ${isLight ? 'bg-white' : 'bg-slate-900 border border-slate-700'}`}>
+                        <div className="p-6">
+                            <h3 className={`text-xl font-serif mb-6 italic ${isLight ? 'text-stone-800' : 'text-white'}`}>Nueva Actividad</h3>
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                <div>
+                                    <label className={`block text-[10px] font-bold mb-1 uppercase tracking-widest ${theme.subtext}`}>Título</label>
+                                    <input
+                                        autoFocus
+                                        type="text"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        placeholder="Ej. Revisar contrato..."
+                                        className={`w-full text-lg border-b pb-2 focus:outline-none bg-transparent ${theme.input} ${isLight ? 'border-stone-200 focus:border-stone-500' : 'border-slate-700 focus:border-slate-500'}`}
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className={`block text-[10px] font-bold mb-1 uppercase tracking-widest ${theme.subtext}`}>Detalles / Notas</label>
+                                    <textarea
+                                        value={context}
+                                        onChange={(e) => setContext(e.target.value)}
+                                        placeholder="Información clave para la ejecución..."
+                                        className={`w-full text-sm p-3 rounded-xl focus:outline-none resize-none h-24 ${isLight ? 'bg-stone-50 text-stone-600' : 'bg-white/5 text-slate-200'}`}
+                                    />
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <div className="flex-1">
+                                        <label className={`block text-[10px] font-bold mb-1 uppercase tracking-widest ${theme.subtext}`}>Área</label>
+                                        <select
+                                            value={area}
+                                            onChange={(e) => setArea(e.target.value)}
+                                            className={`w-full p-2.5 rounded-xl text-sm focus:outline-none appearance-none cursor-pointer ${isLight ? 'bg-stone-50 text-stone-700' : 'bg-white/5 text-slate-200'}`}
+                                        >
+                                            {areas.map(a => <option key={a} value={a}>{a}</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="flex-[1.5] flex gap-2">
+                                        <div className="flex-1">
+                                            <label className={`block text-[10px] font-bold mb-1 uppercase tracking-widest ${theme.subtext}`}>Fecha</label>
+                                            <input
+                                                type="date"
+                                                value={selectedDate}
+                                                onChange={(e) => setSelectedDate(e.target.value)}
+                                                className={`w-full p-2.5 rounded-xl text-sm focus:outline-none appearance-none cursor-pointer ${isLight ? 'bg-stone-50 text-stone-700' : 'bg-white/5 text-slate-200'} scheme-dark`}
+                                            />
+                                        </div>
+                                        <div className="w-24">
+                                            <label className={`block text-[10px] font-bold mb-1 uppercase tracking-widest ${theme.subtext}`}>Hora</label>
+                                            <input
+                                                type="time"
+                                                value={selectedTime}
+                                                onChange={(e) => setSelectedTime(e.target.value)}
+                                                className={`w-full p-2.5 rounded-xl text-sm focus:outline-none appearance-none cursor-pointer ${isLight ? 'bg-stone-50 text-stone-700' : 'bg-white/5 text-slate-200'} scheme-dark`}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end gap-3 mt-8 pt-4 border-t border-white/5">
+                                    <button onClick={onClose} type="button" className={`px-4 py-2 text-sm font-medium rounded-xl hover:bg-white/5 transition-colors ${theme.subtext}`}>Cancelar</button>
+                                    <Button theme={theme} type="submit">Guardar</Button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- APP PRINCIPAL ---
+        function App() {
+            const [view, setView] = useState('dashboard');
+            const [showAddModal, setShowAddModal] = useState(false);
+            const [showSettings, setShowSettings] = useState(false);
+            const [themeKey, setThemeKey] = useState('indigo');
+            const [userName, setUserName] = useState('');
+            const [areas] = useState(['Negocios', 'Administrativo', 'Reuniones', 'Personal']);
+
+            const theme = THEMES[themeKey];
+
+            const [tasks, setTasks] = useState(() => {
+                const saved = localStorage.getItem('focus_tasks_v1');
+                const savedTheme = localStorage.getItem('focus_theme_v1');
+                const savedName = localStorage.getItem('focus_username_v1');
+                if (savedTheme && THEMES[savedTheme]) setThemeKey(savedTheme);
+                if (savedName) setUserName(savedName);
+
+                return saved ? JSON.parse(saved) : [
+                    { id: '1', title: 'Terminar reporte semanal', context: 'Incluir métricas de rendimiento y proyecciones Q3.', area: 'Administrativo', date: new Date().toISOString().split('T')[0], time: '09:00', status: 'pending', createdAt: new Date().toISOString() },
+                    { id: '2', title: 'Enviar facturas pendientes', context: 'Cliente: Grupo Alpha. Verificar montos con contabilidad.', area: 'Negocios', date: null, time: '', status: 'pending', createdAt: new Date().toISOString() },
+                ];
+            });
+
+            useEffect(() => {
+                localStorage.setItem('focus_tasks_v1', JSON.stringify(tasks));
+            }, [tasks]);
+
+            useEffect(() => {
+                localStorage.setItem('focus_theme_v1', themeKey);
+            }, [themeKey]);
+
+            useEffect(() => {
+                localStorage.setItem('focus_username_v1', userName);
+            }, [userName]);
+
+            const todayStr = new Date().toISOString().split('T')[0];
+            const toggleTask = (id) => {
+                setTasks(tasks.map(t => t.id === id ? { ...t, status: t.status === 'done' ? 'pending' : 'done' } : t));
+            };
+            const addTask = (newTask) => setTasks([{ id: generateId(), ...newTask }, ...tasks]);
+            const deleteTask = (id) => setTasks(tasks.filter(t => t.id !== id));
+
+            const pendingTasks = tasks.filter(t => t.status === 'pending');
+            const todayTasks = pendingTasks.filter(t => t.date === todayStr);
+            const laterTasks = pendingTasks.filter(t => t.date !== todayStr);
+
+            const getInsight = () => {
+                if (todayTasks.length === 0 && pendingTasks.length === 0) return "Agenda despejada. Excelente momento para planificación estratégica.";
+                if (todayTasks.length === 0) return "El día está libre de pendientes inmediatos. Revise la agenda futura.";
+                if (todayTasks.length > 5) return "Día de alta carga. Priorice las tareas de mayor impacto.";
+                return `Tiene ${todayTasks.length} objetivos clave para hoy. Mantenga el enfoque.`;
+            };
+
+            const formatDate = (dateStr) => {
+                if (!dateStr) return '';
+                const [y, m, d] = dateStr.split('-');
+                return `${d}/${m}`;
+            };
+
+            const DashboardView = () => (
+                <div className="space-y-10 animate-fade pb-20">
+                    <header className="mb-10 flex justify-between items-start">
+                        <div>
+                            <h1 className={`text-4xl font-serif mb-2 italic ${theme.text}`}>
+                                {getGreeting()}{userName ? `, ${userName}.` : '.'}
+                            </h1>
+                            <p className={`font-light text-lg leading-relaxed ${theme.subtext}`}>{getInsight()}</p>
+                        </div>
+                        <button onClick={() => setShowSettings(true)} className={`p-2 rounded-full hover:bg-white/10 transition-colors ${theme.subtext}`}>
+                            <Icon name="Palette" size={20} />
+                        </button>
+                    </header>
+
+                    <section>
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className={`text-xs font-bold uppercase tracking-[0.2em] flex items-center gap-2 ${theme.subtext}`}>
+                                <Icon name="Sun" size={16} /> Prioridad Hoy
+                            </h2>
+                            <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full ${themeKey === 'light' ? 'bg-stone-100 text-stone-500' : 'bg-white/10 text-white'}`}>{todayTasks.length}</span>
+                        </div>
+
+                        <div className="space-y-4">
+                            {todayTasks.length === 0 ? (
+                                <div className={`p-10 text-center rounded-3xl border border-dashed flex flex-col items-center ${theme.card} border-white/10`}>
+                                    <Icon name="CheckCircle2" className={`mb-3 opacity-50 ${theme.text}`} size={32} />
+                                    <p className={`text-sm font-light ${theme.subtext}`}>Sin tareas asignadas para hoy.</p>
+                                </div>
+                            ) : (
+                                todayTasks.map(task => (
+                                    <Card key={task.id} theme={theme} className="group relative overflow-hidden">
+                                        <div className="flex items-start gap-5 relative z-10">
+                                            <button
+                                                onClick={() => toggleTask(task.id)}
+                                                className={`mt-1 transition-colors hover:text-emerald-500 ${theme.subtext}`}
+                                            >
+                                                <Icon name="Circle" size={24} />
+                                            </button>
+                                            <div className="flex-1">
+                                                <div className="flex justify-between items-start">
+                                                    <p className={`text-lg font-medium leading-snug ${theme.text}`}>{task.title}</p>
+                                                    {task.time && <span className={`text-xs font-mono opacity-60 ${theme.subtext}`}>{task.time}</span>}
+                                                </div>
+                                                {task.context && (
+                                                    <p className={`text-sm mt-2 font-light leading-relaxed opacity-80 ${theme.subtext}`}>
+                                                        {task.context}
+                                                    </p>
+                                                )}
+                                                <div className="mt-3 flex items-center gap-3">
+                                                    <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded bg-white/5 ${theme.subtext}`}>
+                                                        {task.area}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Card>
+                                ))
+                            )}
+                        </div>
+                    </section>
+                </div>
+            );
+
+            const TasksView = () => {
+                const grouped = areas.reduce((acc, area) => {
+                    acc[area] = tasks.filter(t => t.area === area && t.status === 'pending');
+                    return acc;
+                }, {});
+
+                return (
+                    <div className="animate-fade space-y-10 pb-20">
+                        <header className="flex justify-between items-center">
+                            <div>
+                                <h1 className={`text-3xl font-serif italic ${theme.text}`}>Proyectos</h1>
+                                <p className={`font-light mt-1 ${theme.subtext}`}>Organización por áreas.</p>
+                            </div>
+                        </header>
+
+                        <div className="grid gap-8">
+                            {areas.map(area => (
+                                <div key={area} className="space-y-4">
+                                    <h3 className={`text-[10px] font-bold uppercase tracking-[0.3em] border-b pb-2 ${theme.subtext} border-white/10`}>{area}</h3>
+                                    {grouped[area].length === 0 ? (
+                                        <p className={`text-xs italic py-2 opacity-50 ${theme.subtext}`}>Sin actividad pendiente.</p>
+                                    ) : (
+                                        grouped[area].map(task => (
+                                            <Card key={task.id} theme={theme} className="flex items-center gap-4 group">
+                                                <button onClick={() => toggleTask(task.id)} className={`hover:text-emerald-500 transition-colors ${theme.subtext}`}>
+                                                    <Icon name="Circle" size={20} />
+                                                </button>
+                                                <div className="flex-1 min-w-0">
+                                                    <span className={`block truncate ${theme.text}`}>{task.title}</span>
+                                                    {(task.date || task.time) && (
+                                                        <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded uppercase mt-1 inline-flex items-center gap-1">
+                                                            <Icon name="Calendar" size={10} />
+                                                            {formatDate(task.date)} {task.time}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <button onClick={() => deleteTask(task.id)} className={`opacity-0 group-hover:opacity-100 hover:text-rose-400 transition-all p-2 ${theme.subtext}`}>
+                                                    <Icon name="Trash2" size={18} />
+                                                </button>
+                                            </Card>
+                                        ))
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className={`min-h-screen font-sans selection:bg-emerald-500/30 flex justify-center theme-transition ${theme.bg}`}>
+                    <div className="w-full max-w-xl min-h-screen flex flex-col relative border-x border-white/5">
+
+                        <main className="flex-1 p-6 md:p-8 overflow-y-auto custom-scrollbar">
+                            {view === 'dashboard' && <DashboardView />}
+                            {view === 'projects' && <TasksView />}
+                            {view === 'calendar' && <CalendarView tasks={tasks} theme={theme} />}
+                        </main>
+
+                        {/* Navegación Flotante */}
+                        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm px-6">
+                            <div className={`backdrop-blur-xl rounded-[2rem] p-2 shadow-2xl flex items-center justify-between border ${theme.nav}`}>
+                                <button
+                                    onClick={() => setView('dashboard')}
+                                    className={`p-4 rounded-2xl transition-all duration-300 ${view === 'dashboard' ? theme.navActive : 'hover:bg-white/5'}`}
+                                >
+                                    <Icon name="Home" size={22} />
+                                </button>
+
+                                <button
+                                    onClick={() => setView('calendar')}
+                                    className={`p-4 rounded-2xl transition-all duration-300 ${view === 'calendar' ? theme.navActive : 'hover:bg-white/5'}`}
+                                >
+                                    <Icon name="CalendarDays" size={22} />
+                                </button>
+
+                                <button
+                                    onClick={() => setView('projects')}
+                                    className={`p-4 rounded-2xl transition-all duration-300 ${view === 'projects' ? theme.navActive : 'hover:bg-white/5'}`}
+                                >
+                                    <Icon name="Briefcase" size={22} />
+                                </button>
+
+                                <button
+                                    onClick={() => setShowAddModal(true)}
+                                    className={`p-4 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-lg mx-1 ${themeKey === 'light' ? 'bg-stone-800 text-white' : 'bg-white text-indigo-950'}`}
+                                >
+                                    <Icon name="Plus" size={24} />
+                                </button>
+                            </div>
+                        </div>
+
+                        <AddTaskModal
+                            isOpen={showAddModal}
+                            onClose={() => setShowAddModal(false)}
+                            onAdd={addTask}
+                            areas={areas}
+                            theme={theme}
+                        />
+
+                        {showSettings && (
+                            <PersonalizationModal
+                                currentTheme={themeKey}
+                                onThemeChange={setThemeKey}
+                                userName={userName}
+                                onNameChange={setUserName}
+                                onClose={() => setShowSettings(false)}
+                                theme={theme}
+                            />
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>
